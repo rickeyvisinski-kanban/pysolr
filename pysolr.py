@@ -399,6 +399,11 @@ class Solr(object):
         if reason is None:
             reason, full_html = self._scrape_response(resp.headers, resp.content)
 
+        # jetty will now return json error if it was requested with wt=json
+        if reason is None:
+            reason, full_html = self._json_error(resp.content)
+            self.log.error(full_html)
+
         msg = "[Reason: %s]" % reason
 
         if reason is None:
@@ -473,6 +478,14 @@ class Solr(object):
         full_html = full_html.replace('<br />', '')
         full_html = full_html.strip()
         return reason, full_html
+
+    def _json_error(self, content):
+        """
+        solr return a json error message in format of
+        {responseHeader: ..., error: { msg: short description, trace: full java stacktrace}}
+        """
+        jsresp = json.loads(content)['error']
+        return jsresp['msg'], jsresp['trace']
 
     # Conversion #############################################################
 
