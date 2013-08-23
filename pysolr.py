@@ -484,8 +484,14 @@ class Solr(object):
         solr return a json error message in format of
         {responseHeader: ..., error: { msg: short description, trace: full java stacktrace}}
         """
-        jsresp = json.loads(content)['error']
-        return jsresp['msg'], jsresp['trace']
+        try:
+            jsresp = json.loads(content)['error']
+        except:
+            # sometimes we get xml that just hasn't been handled
+            self.log.warning(content)
+        else:
+            return jsresp['msg'], jsresp['trace']
+        return content, 'no json error'
 
     # Conversion #############################################################
 
